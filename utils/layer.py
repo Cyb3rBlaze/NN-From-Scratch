@@ -1,12 +1,7 @@
-import numpy as np
-
-from utils.number import Number
-from utils.activation import *
-
-
 class Layer():
-    def __init__(self, num_neurons, num_prev_neurons, activation="linear"):
+    def __init__(self, num_prev_neurons, num_neurons, activation="linear"):
         self.num_neurons = num_neurons
+        self.num_prev_neurons = num_prev_neurons
 
         self.activation = activation
 
@@ -54,8 +49,7 @@ class Layer():
         
         prev_chain_dw, prev_chain_db = prev_chain
 
-
-        dout_dw = np.dot(self.original_input.reshape((self.num_neurons, -1)), np.dot(prev_chain_dw, da(self.lin_pass).T))
+        dout_dw =  (np.tile(self.original_input, (self.num_neurons, 1)).reshape((self.num_prev_neurons, -1)) @ (prev_chain_dw * da(self.lin_pass))).reshape((self.num_prev_neurons, self.num_neurons))
         dout_db = np.dot(np.tile(da(self.lin_pass), (prev_chain_db.shape[0], 1)).T, prev_chain_db)
 
         self.weights -= lr * dout_dw
@@ -70,6 +64,4 @@ class Layer():
         dout_db = dout_da2*da2_dz2*dz2_da1*da1_dz1*dz1_db
         dout_db = prev_chain*da1_dz1*dz1_db -- prev_chain = dout_da2*da2_dz2*dz2_da1
         '''
-        return np.array([dout_dw, dout_db])
-
-
+        return (dout_dw, dout_db)
