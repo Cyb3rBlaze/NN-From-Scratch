@@ -5,12 +5,12 @@ from utils.activation import *
 
 
 class Layer():
-    def __init__(self, num_neurons, activation="linear"):
+    def __init__(self, num_neurons, num_prev_neurons, activation="linear"):
         self.num_neurons = num_neurons
 
         self.activation = activation
 
-        self.weights = np.array([Number(i-0.5) for i in np.random.rand(num_neurons)])
+        self.weights = np.random.randn(num_prev_neurons, num_neurons)
         self.biases = np.array([Number(i-0.5) for i in np.random.rand(num_neurons)])
     
     def print_params(self):
@@ -20,7 +20,7 @@ class Layer():
         print(self.biases)
 
     def forward(self, input):
-        lin = np.dot(input, np.tile(self.weights, (input.size, 1))) + self.biases
+        lin = input @ self.weights + self.biases
 
         # storing original input passes for chain rule operations during backprop
         self.original_input = input
@@ -54,8 +54,8 @@ class Layer():
         
         prev_chain_dw, prev_chain_db = prev_chain
 
-        dout_dw = np.dot(np.tile(np.dot(np.tile(da(self.lin_pass), (prev_chain_dw.shape[0], 1)).T, prev_chain_dw), 
-            (self.original_input.shape[0], 1)).T, self.original_input)
+
+        dout_dw = np.dot(self.original_input.reshape((self.num_neurons, -1)), np.dot(prev_chain_dw, da(self.lin_pass).T))
         dout_db = np.dot(np.tile(da(self.lin_pass), (prev_chain_db.shape[0], 1)).T, prev_chain_db)
 
         self.weights -= lr * dout_dw
